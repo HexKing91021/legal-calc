@@ -404,25 +404,41 @@
              const chargeInput = chargeRow.querySelector('.charge-input');
              const dropdown = chargeRow.querySelector('.custom-dropdown');
          
-             chargeInput.addEventListener('input', function() {
-                 const query = this.value.toLowerCase();
-                 dropdown.innerHTML = '';
-                 dropdown.style.display = query ? 'block' : 'none';
+         chargeInput.addEventListener('focus', function() {
+         showAllCharges();
+         });
          
-                 charges
-                     .filter(c => c.name.toLowerCase().includes(query))
-                     .forEach(c => {
-                         const item = document.createElement('div');
-                         item.className = 'custom-dropdown-item';
-                         item.textContent = c.name;
-                         item.addEventListener('click', function() {
-                             chargeInput.value = c.name;
-                             updateChargeDetails(chargeRow, c);
-                             dropdown.style.display = 'none';
-                         });
-                         dropdown.appendChild(item);
-                     });
-             });
+         chargeInput.addEventListener('input', function() {
+         const query = this.value.toLowerCase();
+         filterCharges(query);
+         });
+         
+         function showAllCharges() {
+         dropdown.innerHTML = '';
+         dropdown.style.display = 'block';
+         charges.forEach(c => {
+         const item = document.createElement('div');
+         item.className = 'custom-dropdown-item';
+         item.textContent = c.name;
+         item.addEventListener('click', function() {
+            chargeInput.value = c.name;
+            updateChargeDetails(chargeRow, c);
+            dropdown.style.display = 'none';
+         });
+         dropdown.appendChild(item);
+         });
+         }
+         
+         function filterCharges(query) {
+         const items = dropdown.querySelectorAll('.custom-dropdown-item');
+         items.forEach(item => {
+         if (item.textContent.toLowerCase().includes(query)) {
+            item.style.display = 'block';
+         } else {
+            item.style.display = 'none';
+         }
+         });
+         }
          
              chargeRow.querySelector('.remove-charge').addEventListener('click', removeCharge);
              chargeRow.querySelector('.quantity').addEventListener('input', calculateTotal);
