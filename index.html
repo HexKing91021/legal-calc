@@ -21,8 +21,9 @@
         .description-toggle { 
             cursor: pointer; 
             color: blue;
-            text-decoration: underline;
             position: relative;
+        }
+        .description-toggle span {
         }
         .description-toggle .tooltip-text {
             visibility: hidden;
@@ -308,15 +309,16 @@
             chargeRow.querySelector('.fine').textContent = charge.fine;
             const descriptionCell = chargeRow.querySelector('.description');
             descriptionCell.innerHTML = `
-                <div class="description-short">${charge.description}</div>
-                <span class="description-toggle">[more]<span class="tooltip-text">${charge.description}</span>
-                </span>
-                ${charge.licenseRevocation ? `
-                <span class="warning-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span class="tooltip-text">License Revocation: ${charge.licenseRevocation}</span>
-                </span>` : ''}
-            `;
+            <div class="description-short">${charge.description}</div>
+            <span class="description-toggle"><span>[more]</span>
+                <span class="tooltip-text">${charge.description}</span>
+            </span>
+            ${charge.licenseRevocation ? `
+            <span class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="tooltip-text"><strong>License Revocation:</strong> ${charge.licenseRevocation}</span>
+            </span>` : ''}
+        `;
             const quantityInput = chargeRow.querySelector('.quantity');
             quantityInput.disabled = !charge.stackable;
             if (!charge.stackable) {
