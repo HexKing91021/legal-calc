@@ -114,6 +114,25 @@
          visibility: visible;
          opacity: 1;
          }
+         .custom-dropdown {
+         max-height: 300px; /* Adjust as needed */
+         overflow-y: auto;
+         }
+         .custom-dropdown-item {
+         padding: 5px;
+         border-bottom: 1px solid #eee;
+         }
+         .custom-dropdown-item strong {
+         font-size: 14px;
+         }
+         .charge-description {
+         font-size: 12px;
+         color: #666;
+         display: block;
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+         }
       </style>
    </head>
    <body>
@@ -419,7 +438,7 @@
          charges.forEach(c => {
          const item = document.createElement('div');
          item.className = 'custom-dropdown-item';
-         item.textContent = c.name;
+         item.innerHTML = `<strong>${c.name}</strong><br><span class="charge-description">${c.description}</span>`;
          item.addEventListener('click', function() {
             chargeInput.value = c.name;
             updateChargeDetails(chargeRow, c);
@@ -432,7 +451,9 @@
          function filterCharges(query) {
          const items = dropdown.querySelectorAll('.custom-dropdown-item');
          items.forEach(item => {
-         if (item.textContent.toLowerCase().includes(query)) {
+         const name = item.querySelector('strong').textContent.toLowerCase();
+         const description = item.querySelector('.charge-description').textContent.toLowerCase();
+         if (name.includes(query) || description.includes(query)) {
             item.style.display = 'block';
          } else {
             item.style.display = 'none';
