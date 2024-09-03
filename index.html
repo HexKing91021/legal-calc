@@ -186,7 +186,7 @@
          </table>
          <div class="row mb-3">
             <div class="col">
-               <button id="addCharge" class="btn btn-primary">Add Charge</button>
+               <!-- <button id="addCharge" class="btn btn-primary">Add Charge</button> -->
             </div>
          </div>
          <div class="row mb-3">
@@ -378,235 +378,254 @@
          { name: "Terroristic Threat", jailTime: 800, fine: 10000, description: "A threat of violence, harm or destruction (general or specific) for a political aim or to incite fear among the general public.", stackable: false, licenseRevocation: "Requires Judge Authorization" }
          ];
          
-         const chargesContainer = document.getElementById('charges');
-         const addChargeBtn = document.getElementById('addCharge');
-         const presetSelect = document.getElementById('preset');
-         const discountButtonsContainer = document.getElementById('discountButtons');
-         const preTotalJailTimeSpan = document.getElementById('preTotalJailTime');
-         const postTotalJailTimeSpan = document.getElementById('postTotalJailTime');
-         const savedJailTimeSpan = document.getElementById('savedJailTime');
-         const preTotalFineSpan = document.getElementById('preTotalFine');
-         const postTotalFineSpan = document.getElementById('postTotalFine');
-         const savedFineSpan = document.getElementById('savedFine');
-         const additionalActionsWarning = document.getElementById('additionalActionsWarning');
-         const additionalActionsList = document.getElementById('additionalActionsList');
-         
-         let globalDiscount = 20;
-         
-         function createChargeElement(charge) {
-             const chargeRow = document.createElement('tr');
-             chargeRow.className = 'charge-item';
-             if (charge && charge.licenseRevocation) {
-                 chargeRow.classList.add('additional-action');
-             }
-             chargeRow.innerHTML = `
-                 <td>
-                     <div class="charge-search-container">
-                         <input type="text" class="charge-input" placeholder="Type to search charges" autocomplete="off">
-                         <div class="custom-dropdown"></div>
-                     </div>
-                 </td>
-                 <td class="jail-time"></td>
-                 <td class="fine"></td>
-                 <td class="description"></td>
-                 <td>
-                     <input type="number" class="form-control quantity" value="1" min="1">
-                 </td>
-                 <td>
-                     <input type="number" class="form-control individual-discount" value="0" min="0" max="100" placeholder="Discount %">
-                 </td>
-                 <td>
-                     <button class="btn btn-danger remove-charge">Remove</button>
-                 </td>
-             `;
-         
-             const chargeInput = chargeRow.querySelector('.charge-input');
-             const dropdown = chargeRow.querySelector('.custom-dropdown');
-         
-         chargeInput.addEventListener('focus', function() {
-         showAllCharges();
-         });
-         
-         chargeInput.addEventListener('input', function() {
-         const query = this.value.toLowerCase();
-         filterCharges(query);
-         });
-         
-         function showAllCharges() {
-         dropdown.innerHTML = '';
-         dropdown.style.display = 'block';
-         charges.forEach(c => {
-         const item = document.createElement('div');
-         item.className = 'custom-dropdown-item';
-         item.innerHTML = `<strong>${c.name}</strong><br><span class="charge-description">${c.description}</span>`;
-         item.addEventListener('click', function() {
-            chargeInput.value = c.name;
-            updateChargeDetails(chargeRow, c);
-            dropdown.style.display = 'none';
-         });
-         dropdown.appendChild(item);
-         });
-         }
-         
-function filterCharges(query) {
-    const items = Array.from(dropdown.querySelectorAll('.custom-dropdown-item'));
-    items.forEach(item => {
-        const name = item.querySelector('strong').textContent.toLowerCase();
-        const description = item.querySelector('.charge-description').textContent.toLowerCase();
-        item.dataset.titleMatch = name.includes(query);
-        item.dataset.descriptionMatch = description.includes(query);
-        item.style.display = (name.includes(query) || description.includes(query)) ? 'block' : 'none';
+    const chargesContainer = document.getElementById('charges');
+    const presetSelect = document.getElementById('preset');
+    const discountButtonsContainer = document.getElementById('discountButtons');
+    const preTotalJailTimeSpan = document.getElementById('preTotalJailTime');
+    const postTotalJailTimeSpan = document.getElementById('postTotalJailTime');
+    const savedJailTimeSpan = document.getElementById('savedJailTime');
+    const preTotalFineSpan = document.getElementById('preTotalFine');
+    const postTotalFineSpan = document.getElementById('postTotalFine');
+    const savedFineSpan = document.getElementById('savedFine');
+    const additionalActionsWarning = document.getElementById('additionalActionsWarning');
+    const additionalActionsList = document.getElementById('additionalActionsList');
+
+    let globalDiscount = 20;
+
+    function createChargeElement(charge) {
+        const chargeRow = document.createElement('tr');
+        chargeRow.className = 'charge-item';
+        if (charge && charge.licenseRevocation) {
+            chargeRow.classList.add('additional-action');
+        }
+        chargeRow.innerHTML = `
+            <td>
+                <div class="charge-search-container">
+                    <input type="text" class="charge-input" placeholder="Type to search charges" autocomplete="off">
+                    <div class="custom-dropdown"></div>
+                </div>
+            </td>
+            <td class="jail-time"></td>
+            <td class="fine"></td>
+            <td class="description"></td>
+            <td>
+                <input type="number" class="form-control quantity" value="1" min="1">
+            </td>
+            <td>
+                <input type="number" class="form-control individual-discount" value="0" min="0" max="100" placeholder="Discount %">
+            </td>
+            <td>
+                <button class="btn btn-danger remove-charge">Remove</button>
+            </td>
+        `;
+
+        const chargeInput = chargeRow.querySelector('.charge-input');
+        const dropdown = chargeRow.querySelector('.custom-dropdown');
+
+        chargeInput.addEventListener('focus', function() {
+            showAllCharges(dropdown);
+        });
+
+        chargeInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            filterCharges(dropdown, query);
+        });
+
+        chargeRow.querySelector('.remove-charge').addEventListener('click', removeCharge);
+        chargeRow.querySelector('.quantity').addEventListener('input', calculateTotal);
+        chargeRow.querySelector('.individual-discount').addEventListener('input', calculateTotal);
+
+        if (charge) {
+            chargeInput.value = charge.name;
+            updateChargeDetails(chargeRow, charge);
+        }
+
+        return chargeRow;
+    }
+
+    function showAllCharges(dropdown) {
+        dropdown.innerHTML = '';
+        dropdown.style.display = 'block';
+        charges.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'custom-dropdown-item';
+            item.innerHTML = `<strong>${c.name}</strong><br><span class="charge-description">${c.description}</span>`;
+            item.addEventListener('click', function() {
+                this.closest('.charge-search-container').querySelector('.charge-input').value = c.name;
+                updateChargeDetails(this.closest('.charge-item'), c);
+                dropdown.style.display = 'none';
+                calculateTotal();
+                ensureEmptyChargeRow();
+            });
+            dropdown.appendChild(item);
+        });
+    }
+
+    function filterCharges(dropdown, query) {
+        const items = Array.from(dropdown.querySelectorAll('.custom-dropdown-item'));
+        items.forEach(item => {
+            const name = item.querySelector('strong').textContent.toLowerCase();
+            const description = item.querySelector('.charge-description').textContent.toLowerCase();
+            item.dataset.titleMatch = name.includes(query);
+            item.dataset.descriptionMatch = description.includes(query);
+            item.style.display = (name.includes(query) || description.includes(query)) ? 'block' : 'none';
+        });
+
+        // Sort the items
+        items.sort((a, b) => {
+            if (a.dataset.titleMatch === 'true' && b.dataset.titleMatch !== 'true') return -1;
+            if (b.dataset.titleMatch === 'true' && a.dataset.titleMatch !== 'true') return 1;
+            return 0;
+        });
+
+        // Reorder the items in the DOM
+        items.forEach(item => dropdown.appendChild(item));
+    }
+
+    function updateChargeDetails(chargeRow, charge) {
+        chargeRow.querySelector('.jail-time').textContent = charge.jailTime;
+        chargeRow.querySelector('.fine').textContent = charge.fine;
+        const descriptionCell = chargeRow.querySelector('.description');
+        descriptionCell.innerHTML = `
+        <div class="description-short">${charge.description}</div>
+        <span class="description-toggle"><span>[more]</span>
+            <span class="tooltip-text">${charge.description}</span>
+        </span>
+        ${charge.licenseRevocation ? `
+        <span class="warning-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="tooltip-text"><strong>Additional Action:</strong> ${charge.licenseRevocation}</span>
+        </span>` : ''}
+    `;
+        const quantityInput = chargeRow.querySelector('.quantity');
+        quantityInput.disabled = !charge.stackable;
+        if (!charge.stackable) {
+            quantityInput.value = 1;
+        }
+        if (charge.licenseRevocation) {
+            chargeRow.classList.add('additional-action');
+        } else {
+            chargeRow.classList.remove('additional-action');
+        }
+        updateAdditionalActionsWarning();
+        calculateTotal();
+        ensureEmptyChargeRow();
+    }
+
+    function removeCharge() {
+        this.closest('.charge-item').remove();
+        updateAdditionalActionsWarning();
+        calculateTotal();
+        ensureEmptyChargeRow();
+    }
+
+    function updateAdditionalActionsWarning() {
+        const actions = new Set();
+        document.querySelectorAll('.charge-item').forEach(item => {
+            const chargeName = item.querySelector('.charge-input').value;
+            const charge = charges.find(c => c.name === chargeName);
+            if (charge && charge.licenseRevocation) {
+                actions.add(`${charge.name}: ${charge.licenseRevocation}`);
+            }
+        });
+
+        if (actions.size > 0) {
+            additionalActionsWarning.style.display = 'block';
+            additionalActionsList.innerHTML = Array.from(actions).map(r => `<li>${r}</li>`).join('');
+        } else {
+            additionalActionsWarning.style.display = 'none';
+        }
+    }
+
+    function calculateTotal() {
+        let totalJailTime = 0;
+        let totalFine = 0;
+
+        document.querySelectorAll('.charge-item').forEach(item => {
+            const jailTime = parseInt(item.querySelector('.jail-time').textContent) || 0;
+            const fine = parseInt(item.querySelector('.fine').textContent) || 0;
+            const quantity = parseInt(item.querySelector('.quantity').value) || 1;
+            const individualDiscount = parseInt(item.querySelector('.individual-discount').value) || 0;
+
+            const discountedJailTime = jailTime * (1 - individualDiscount / 100);
+            const discountedFine = fine * (1 - individualDiscount / 100);
+
+            totalJailTime += discountedJailTime * quantity;
+            totalFine += discountedFine * quantity;
+        });
+
+        const postDiscountJailTime = Math.round(totalJailTime * (1 - globalDiscount / 100));
+        const postDiscountFine = Math.round(totalFine * (1 - globalDiscount / 100));
+        const finalJailTime = Math.min(postDiscountJailTime, 4000);
+
+        const savedJailTime = Math.round(totalJailTime) - finalJailTime;
+        const savedFine = Math.round(totalFine) - Math.round(postDiscountFine);
+
+        preTotalJailTimeSpan.textContent = Math.round(totalJailTime);
+        postTotalJailTimeSpan.textContent = finalJailTime;
+        savedJailTimeSpan.textContent = savedJailTime;
+        preTotalFineSpan.textContent = Math.round(totalFine);
+        postTotalFineSpan.textContent = Math.round(postDiscountFine);
+        savedFineSpan.textContent = savedFine;
+    }
+
+    function ensureEmptyChargeRow() {
+        const chargeRows = chargesContainer.querySelectorAll('.charge-item');
+        const lastRow = chargeRows[chargeRows.length - 1];
+        if (!lastRow || lastRow.querySelector('.charge-input').value !== '') {
+            chargesContainer.appendChild(createChargeElement());
+        }
+    }
+
+    presetSelect.addEventListener('change', () => {
+        chargesContainer.innerHTML = '';
+        if (presetSelect.value === 'bank_robbery') {
+            const presetCharges = [
+                "Bank Robbery",
+                "Kidnapping",
+                "Felony Evading Arrest",
+                "Reckless Driving"
+            ];
+
+            presetCharges.forEach(chargeName => {
+                const charge = charges.find(c => c.name === chargeName);
+                if (charge) {
+                    chargesContainer.appendChild(createChargeElement(charge));
+                }
+            });
+        }
+        updateAdditionalActionsWarning();
+        calculateTotal();
+        ensureEmptyChargeRow();
     });
 
-    // Sort the items
-    items.sort((a, b) => {
-        if (a.dataset.titleMatch === 'true' && b.dataset.titleMatch !== 'true') return -1;
-        if (b.dataset.titleMatch === 'true' && a.dataset.titleMatch !== 'true') return 1;
-        return 0;
+    // Create discount buttons
+    for (let i = 5; i <= 100; i += 5) {
+        const button = document.createElement('button');
+        button.textContent = i + '%';
+        button.className = 'btn btn-outline-primary discount-btn';
+        if (i === 20) {
+            button.classList.add('active');
+        }
+        button.addEventListener('click', function() {
+            globalDiscount = i;
+            document.querySelectorAll('.discount-btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            calculateTotal();
+        });
+        discountButtonsContainer.appendChild(button);
+    }
+
+    document.addEventListener('click', function(event) {
+        const dropdowns = document.querySelectorAll('.custom-dropdown');
+        dropdowns.forEach(dropdown => {
+            if (!dropdown.contains(event.target) && !event.target.matches('.charge-input')) {
+                dropdown.style.display = 'none';
+            }
+        });
     });
 
-    // Reorder the items in the DOM
-    items.forEach(item => dropdown.appendChild(item));
-}
-         
-             chargeRow.querySelector('.remove-charge').addEventListener('click', removeCharge);
-             chargeRow.querySelector('.quantity').addEventListener('input', calculateTotal);
-             chargeRow.querySelector('.individual-discount').addEventListener('input', calculateTotal);
-         
-             if (charge) {
-                 chargeInput.value = charge.name;
-                 updateChargeDetails(chargeRow, charge);
-             }
-         
-             return chargeRow;
-         }
-         
-         function updateChargeDetails(chargeRow, charge) {
-             chargeRow.querySelector('.jail-time').textContent = charge.jailTime;
-             chargeRow.querySelector('.fine').textContent = charge.fine;
-             const descriptionCell = chargeRow.querySelector('.description');
-             descriptionCell.innerHTML = `
-             <div class="description-short">${charge.description}</div>
-             <span class="description-toggle"><span>[more]</span>
-                 <span class="tooltip-text">${charge.description}</span>
-             </span>
-             ${charge.licenseRevocation ? `
-             <span class="warning-icon">
-                 <i class="fas fa-exclamation-triangle"></i>
-                 <span class="tooltip-text"><strong>Additional Action:</strong> ${charge.licenseRevocation}</span>
-             </span>` : ''}
-         `;
-             const quantityInput = chargeRow.querySelector('.quantity');
-             quantityInput.disabled = !charge.stackable;
-             if (!charge.stackable) {
-                 quantityInput.value = 1;
-             }
-             if (charge.licenseRevocation) {
-                 chargeRow.classList.add('additional-action');
-             } else {
-                 chargeRow.classList.remove('additional-action');
-             }
-             updateAdditionalActionsWarning();
-             calculateTotal();
-         }
-         
-         function removeCharge() {
-             this.closest('.charge-item').remove();
-             updateAdditionalActionsWarning();
-             calculateTotal();
-         }
-         
-         function updateAdditionalActionsWarning() {
-             const actions = new Set();
-             document.querySelectorAll('.charge-item').forEach(item => {
-                 const chargeName = item.querySelector('.charge-input').value;
-                 const charge = charges.find(c => c.name === chargeName);
-                 if (charge && charge.licenseRevocation) {
-                     actions.add(`${charge.name}: ${charge.licenseRevocation}`);
-                 }
-             });
-         
-             if (actions.size > 0) {
-                 additionalActionsWarning.style.display = 'block';
-                 additionalActionsList.innerHTML = Array.from(actions).map(r => `<li>${r}</li>`).join('');
-             } else {
-                 additionalActionsWarning.style.display = 'none';
-             }
-         }
-         
-         function calculateTotal() {
-             let totalJailTime = 0;
-             let totalFine = 0;
-         
-             document.querySelectorAll('.charge-item').forEach(item => {
-                 const jailTime = parseInt(item.querySelector('.jail-time').textContent) || 0;
-                 const fine = parseInt(item.querySelector('.fine').textContent) || 0;
-                 const quantity = parseInt(item.querySelector('.quantity').value) || 1;
-                 const individualDiscount = parseInt(item.querySelector('.individual-discount').value) || 0;
-         
-                 const discountedJailTime = jailTime * (1 - individualDiscount / 100);
-                 const discountedFine = fine * (1 - individualDiscount / 100);
-         
-                 totalJailTime += discountedJailTime * quantity;
-                 totalFine += discountedFine * quantity;
-             });
-         
-             const postDiscountJailTime = Math.round(totalJailTime * (1 - globalDiscount / 100));
-             const postDiscountFine = Math.round(totalFine * (1 - globalDiscount / 100));
-             const finalJailTime = Math.min(postDiscountJailTime, 4000);
-         
-             const savedJailTime = Math.round(totalJailTime) - finalJailTime;
-             const savedFine = Math.round(totalFine) - Math.round(postDiscountFine);
-         
-             preTotalJailTimeSpan.textContent = Math.round(totalJailTime);
-             postTotalJailTimeSpan.textContent = finalJailTime;
-             savedJailTimeSpan.textContent = savedJailTime;
-             preTotalFineSpan.textContent = Math.round(totalFine);
-             postTotalFineSpan.textContent = Math.round(postDiscountFine);
-             savedFineSpan.textContent = savedFine;
-         }
-         
-         addChargeBtn.addEventListener('click', () => {
-             chargesContainer.appendChild(createChargeElement());
-         });
-         
-         presetSelect.addEventListener('change', () => {
-             chargesContainer.innerHTML = '';
-             if (presetSelect.value === 'bank_robbery') {
-                 const presetCharges = [
-                     "Bank Robbery",
-                     "Kidnapping",
-                     "Felony Evading Arrest",
-                     "Reckless Driving"
-                 ];
-         
-                 presetCharges.forEach(chargeName => {
-                     const charge = charges.find(c => c.name === chargeName);
-                     if (charge) {
-                         chargesContainer.appendChild(createChargeElement(charge));
-                     }
-                 });
-             }
-             updateAdditionalActionsWarning();
-             calculateTotal();
-         });
-         
-         // Create discount buttons
-         for (let i = 5; i <= 100; i += 5) {
-             const button = document.createElement('button');
-             button.textContent = i + '%';
-             button.className = 'btn btn-outline-primary discount-btn';
-             if (i === 20) {
-                 button.classList.add('active');
-             }
-             button.addEventListener('click', function() {
-                 globalDiscount = i;
-                 document.querySelectorAll('.discount-btn').forEach(btn => btn.classList.remove('active'));
-                 this.classList.add('active');
-                 calculateTotal();
-             });
-             discountButtonsContainer.appendChild(button);
-         }
-      </script>
-   </body>
+    // Initialize the first empty row
+    ensureEmptyChargeRow();
+</script>   </body>
 </html>
